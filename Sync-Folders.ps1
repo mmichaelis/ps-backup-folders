@@ -87,6 +87,13 @@ with WD Elements drive attached).
 .PARAMETER PropertiesFile
 The properties file (JSON) to read. Defaults to ~/Sync-Folders.json.
 
+.PARAMETER AfterAll
+Controls what happens when all folders are synchronized. By default
+this is controlled by the entry in the JSON file. This parameter
+overrides any behavior specified in the JSON file. Possible values
+are: default (use JSON entry), none (no action), shutdown (shutdown
+the computer).
+
 .EXAMPLE
 Sync-Folders
 
@@ -117,8 +124,16 @@ Param(
     HelpMessage="Where to read the Sync-Folders configuration file from (JSON)."
   )]
   [String]
-  $PropertiesFile = "~/Sync-Folders.json"
+  $PropertiesFile = "~/Sync-Folders.json",
+  [parameter(
+    HelpMessage="Where to read the Sync-Folders configuration file from (JSON)."
+  )]
+  [ValidateSet("default","none","shutdown")]
+  [String]
+  $AfterAll = "default"
 )
+
+Set-Variable -Name "validAfterAll" -Value @("default", "none", "shutdown") -Option Constant
 
 Function Force-Resolve-Path {
   <#
@@ -154,8 +169,20 @@ Function Read-Json {
 Function Validate-Parameters {
   $Global:ConfigurationPath = Force-Resolve-Path $PropertiesFile
   if (-not (Test-Path $Global:ConfigurationPath)) {
-    Write-Error @"
+    Write-Error -Category InvalidArgument -TargetObject $Global:ConfigurationPath -Message @"
 [ERROR] Unable to find configuration file: $Global:ConfigurationPath
+
+To get help call:
+
+PS C:\>Get-Help $PSScriptRoot\Sync-Folders.ps1
+"@
+    Exit 1
+  }
+  if (-not ($validAfterAll.Contains($AfterAll))) {
+    Write-Error -Category InvalidArgument -TargetObject $AfterAll -Message @"
+[ERROR] Invalid value for AfterAll: '$AfterAll'
+
+Please choose one of $($validAfterAll -join ', ').
 
 To get help call:
 
@@ -171,7 +198,7 @@ Function Read-Configuration {
 
 Function Validate-Configuration {
   If (-not (Get-Member -inputobject $Global:Configuration -name "items" -Membertype Properties)) {
-    Write-Error @"
+    Write-Error -Category InvalidArgument -TargetObject $Global:Configuration -Message @"
 [ERROR] Missing root element 'items' in $Global:ConfigurationPath.
 
 To get help and example configurations call:
@@ -181,21 +208,28 @@ PS C:\>Get-Help $PSScriptRoot\Sync-Folders.ps1 -full
     Exit 1
   }
 
-  If ($Global:Configuration.afterAll) {
-    Switch ($Global:Configuration.afterAll) {
+  $LocalAfterAll = $Global:Configuration.afterAll
+  If ($AfterAll -and $AfterAll -isnot "default") {
+    $LocalAfterAll = $AfterAll
+  }
+  If ($LocalAfterAll) {
+    Switch ($LocalAfterAll.ToLower()) {
       "shutdown" {
         Write-Verbose "Will shutdown computer after sync is finished."
       }
+      {($_ -eq "none") -or ($_ -eq "default")} {
+        Write-Debug "No action activated when sync is finished."
+      }
       default {
-        Write-Error @"
-[ERROR] Unsupported afterAll action: $Global:Configuration.afterAll
+        Write-Error -Category InvalidArgument -TargetObject $Global:Configuration.afterAll @"
+[ERROR] Unsupported afterAll action: $_
 
-Supported action (case-sensitive): shutdown
+Supported action (case-sensitive): $($validAfterAll -join ', ')
 "@
       }
     }
   }
-
+  $AfterAll = $LocalAfterAll
 
   Write-Verbose "Found $($Global:Configuration.items.Count) folder pair(s) to synchronize."
 }
@@ -227,17 +261,15 @@ Function Run-All-Synchronizations {
 }
 
 Function Run-After-All {
-  If ($Global:Configuration.afterAll) {
-    Switch ($Global:Configuration.afterAll) {
+  If ($AfterAll) {
+    Switch ($AfterAll.ToLower()) {
       "shutdown" {
         Stop-Computer
       }
+      {($_ -eq "none") -or ($_ -eq "default")} {
+      }
       default {
-        Write-Error @"
-[ERROR] Unsupported afterAll action: $Global:Configuration.afterAll
-
-Supported action (case-sensitive): shutdown
-"@
+        Write-Error "[ERROR] Unsupported afterAll action: $_"
       }
     }
   }
