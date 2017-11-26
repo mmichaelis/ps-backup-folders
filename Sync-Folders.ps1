@@ -9,12 +9,13 @@ a JSON file which mght list several folders to synchronize/mirror.
 The script is especially meant to have an easy way to do backups for example
 to a NAS or an external drive.
 
-.INPUT
-None
-You cannot pipe input to this cmdlet.
+.INPUTS
 
-.OUTPUT
-None
+None.
+
+.OUTPUTS
+
+None.
 
 .NOTES
 The actual implementation of this script is very basic as it is just a
@@ -103,6 +104,9 @@ Sync-Folders -PropertiesFile .\Other-Sync-Folders.json
 
 Read another configuration file relative to your current working
 directory.
+
+.LINK
+https://github.com/mmichaelis/ps-sync-folders
 
 .LINK
 https://technet.microsoft.com/en-us/library/cc733145(v=ws.10).aspx
