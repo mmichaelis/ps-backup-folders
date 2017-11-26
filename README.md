@@ -29,7 +29,7 @@ The default JSON file to read is `~/Sync-Folders.json` which for example might l
     },
     {
       "from": "C:/FromLocal",
-      "to": "//Fritz-nas/fritz.nas/Elements/ToNAS"
+      "to": "//Fritz-nas/fritz.nas/Elements/ToNAS",
       "options": [
         "/MIR",
         "/R:5",
