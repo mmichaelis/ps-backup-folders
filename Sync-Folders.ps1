@@ -209,7 +209,7 @@ PS C:\>Get-Help $PSScriptRoot\Sync-Folders.ps1 -full
   }
 
   $LocalAfterAll = $Global:Configuration.afterAll
-  If ($AfterAll -and $AfterAll -isnot "default") {
+  If ($AfterAll -and -not ($AfterAll -eq "default")) {
     $LocalAfterAll = $AfterAll
   }
   If ($LocalAfterAll) {
