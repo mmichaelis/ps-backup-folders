@@ -84,6 +84,24 @@ with WD Elements drive attached).
   ]
 }
 
+If a network share or drive is not always attached you can mark the
+source or target folder as removable:
+
+{
+  "items": [
+    {
+      "from": {
+        "path": "C:/From",
+        "removable": true
+      },
+      "to": {
+        "path": "//unc-host/unc-path",
+        "removable": true
+      }
+    }
+  ]
+}
+
 .PARAMETER PropertiesFile
 The properties file (JSON) to read. Defaults to ~/Sync-Folders.json.
 
@@ -95,22 +113,28 @@ are: default (use JSON entry), none (no action), shutdown (shutdown
 the computer).
 
 .EXAMPLE
-Sync-Folders
+Sync-Folders.ps1
 
 Synchronize folders with a configuration file named Sync-Folders.json in
 your home folder.
 
 .EXAMPLE
-Sync-Folders -PropertiesFile ~/Sync-Folders.json
+Sync-Folders.ps1 -PropertiesFile ~/Sync-Folders.json
 
 The very same as the default behavior just with the configuration file
 explicitly given.
 
 .EXAMPLE
-Sync-Folders -PropertiesFile .\Other-Sync-Folders.json
+Sync-Folders.ps1 -PropertiesFile .\Other-Sync-Folders.json
 
 Read another configuration file relative to your current working
 directory.
+
+.EXAMPLE
+Sync-Folders.ps1 -AfterAll shutdown
+
+Run synchronization and shutdown the computer after synchronization
+is done.
 
 .LINK
 https://github.com/mmichaelis/ps-sync-folders
@@ -120,12 +144,20 @@ https://technet.microsoft.com/en-us/library/cc733145(v=ws.10).aspx
 
 #>
 Param(
-  [parameter(
+  [Parameter(
     HelpMessage="Where to read the Sync-Folders configuration file from (JSON)."
   )]
+  [alias("Config","Properties")]
+  [ValidateScript({
+    If (Test-Path (Force-Resolve-Path $_) -PathType 'Leaf') {
+     $true
+    } Else {
+      Throw "Properties file $_ does not exist."
+    }
+  })]
   [String]
   $PropertiesFile = "~/Sync-Folders.json",
-  [parameter(
+  [Parameter(
     HelpMessage="Where to read the Sync-Folders configuration file from (JSON)."
   )]
   [ValidateSet("default","none","shutdown")]
@@ -133,7 +165,7 @@ Param(
   $AfterAll = "default"
 )
 
-Set-Variable -Name "validAfterAll" -Value @("default", "none", "shutdown") -Option Constant
+Set-Variable -Name "validAfterAll" -Value @("default", "none", "shutdown") -Scope Script
 
 Function Force-Resolve-Path {
   <#
@@ -167,6 +199,10 @@ Function Read-Json {
 }
 
 Function Validate-Parameters {
+  <#
+  .SYNOPSIS
+    Reads the given JSON File into a Hashtable.
+  #>
   $Global:ConfigurationPath = Force-Resolve-Path $PropertiesFile
   if (-not (Test-Path $Global:ConfigurationPath)) {
     Write-Error -Category InvalidArgument -TargetObject $Global:ConfigurationPath -Message @"
@@ -250,10 +286,46 @@ Function Run-Single-Synchronization {
   Param(
     [PSCustomObject] $SyncConfig
   )
-  $FromFolder = $SyncConfig.from
-  $ToFolder = $SyncConfig.to
+  $FromFolder = Get-Folder-Object -Folder $SyncConfig.from
+  $ToFolder = Get-Folder-Object -Folder $SyncConfig.to
+
+  If ($FromFolder.removable -and -not (Exists-Top-Parent -Folder $FromFolder.path)) {
+    Write-Warning "Skipping removable source device as it does not exist: $($FromFolder.path)"
+    Return
+  }
+  If ($ToFolder.removable -and -not (Exists-Top-Parent -Folder $ToFolder.path)) {
+    Write-Warning "Skipping removable target device as it does not exist: $($ToFolder.path)"
+    Return
+  }
   $Options = Or-Default -Original $SyncConfig.options -Default @("/MIR", "/R:5", "/W:15", "/MT:8");
-  RoboCopy $FromFolder $ToFolder $Options
+  Write-Host "Synchronizing $($FromFolder.path) to $($ToFolder.path)."
+  RoboCopy $FromFolder.path $ToFolder.path $Options
+}
+
+Function Get-Folder-Object {
+  Param(
+    [Object] $Folder
+  )
+  If ($Folder -is [System.Management.Automation.PSCustomObject]) {
+    Return $Folder
+  }
+  Return New-Object psobject -Property @{ path=$Folder; removable=$false }
+}
+
+Function Exists-Top-Parent {
+  Param(
+    [String] $Folder
+  )
+  [URI] $FolderUri = [URI]$Folder
+  If ($FolderUri.IsAbsoluteUri) {
+    If ($FolderUri.IsUnc) {
+      Return (Test-Path -Path "//$FolderUri.Host/")
+    } else {
+      $DriveLetter = Split-Path -Path $Folder -Qualifier
+      Return (Test-Path -Path $DriveLetter)
+    }
+  }
+  Return $true
 }
 
 Function Run-All-Synchronizations {
