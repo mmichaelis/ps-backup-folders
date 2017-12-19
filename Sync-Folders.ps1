@@ -1,4 +1,5 @@
-﻿<#
+﻿#Requires -Version 5
+<#
 .SYNOPSIS
 Synchronises two folders
 
@@ -147,14 +148,8 @@ Param(
   [Parameter(
     HelpMessage="Where to read the Sync-Folders configuration file from (JSON)."
   )]
-  [alias("Config","Properties")]
-  [ValidateScript({
-    If (Test-Path (Force-Resolve-Path $_) -PathType 'Leaf') {
-     $true
-    } Else {
-      Throw "Properties file $_ does not exist."
-    }
-  })]
+  [Alias("Config","Properties")]
+  [ValidateScript({[ParameterValidation]::ValidatePropertiesFile($PSItem)})]
   [String]
   $PropertiesFile = "~/Sync-Folders.json",
   [Parameter(
@@ -165,26 +160,72 @@ Param(
   $AfterAll = "default"
 )
 
+Set-StrictMode -Version Latest
+
 Set-Variable -Name "validAfterAll" -Value @("default", "none", "shutdown") -Scope Script
 
-Function Force-Resolve-Path {
+Class ParameterValidation {
+  static [bool] ValidatePropertiesFile([String] $Path) {
+    If (Test-Path ([FileUtil]::ForceResolvePath($PSItem)) -PathType 'Leaf') {
+     $true
+    } Else {
+      Throw "Properties file $PSItem does not exist."
+    }
+    Return $false
+  }
+}
+
+Class FileUtil {
   <#
   .SYNOPSIS
     Calls Resolve-Path but works for files that don't exist.
   .LINK
     http://devhawk.net/2010/01/21/fixing-powershells-busted-resolve-path-cmdlet/
   #>
-  Param(
-    [String] $FileName
-  )
-
-  $FileName = Resolve-Path $FileName -ErrorAction SilentlyContinue `
+  static [String] ForceResolvePath([String] $FileName) {
+    $_frperror = @{}
+    $FileName = Resolve-Path $FileName -ErrorAction SilentlyContinue `
                                        -ErrorVariable _frperror
-  If (-not($FileName)) {
-      $FileName = $_frperror[0].TargetObject
-  }
+    If (-not($FileName)) {
+        $FileName = $_frperror[0].TargetObject
+    }
 
-  Return $FileName
+    Return $FileName
+  }
+}
+
+<#
+.Link
+https://stackoverflow.com/questions/3740128/pscustomobject-to-hashtable
+#>
+Function Convert-PSObjectToHashtable([Parameter(ValueFromPipeline)] $InputObject) {
+  Begin { }
+  Process {
+    If ($null -eq $InputObject) {
+      return $null
+    }
+
+    If ($InputObject -is [System.Collections.IEnumerable] -and $InputObject -isnot [string]) {
+      $collection = @(
+        ForEach ($object in $InputObject) {
+          Convert-PSObjectToHashtable $object
+        }
+      )
+
+      Write-Output -NoEnumerate $collection
+    } ElseIf ($InputObject -is [psobject]) {
+      $hash = @{}
+
+      ForEach ($property in $InputObject.PSObject.Properties) {
+        $hash[$property.Name] = Convert-PSObjectToHashtable $property.Value
+      }
+
+      $hash
+    } Else {
+      $InputObject
+    }
+  }
+  End { }
 }
 
 Function Read-Json {
@@ -198,37 +239,8 @@ Function Read-Json {
   Get-Content "$Path" | ConvertFrom-Json
 }
 
-Function Validate-Parameters {
-  <#
-  .SYNOPSIS
-    Reads the given JSON File into a Hashtable.
-  #>
-  $Global:ConfigurationPath = Force-Resolve-Path $PropertiesFile
-  if (-not (Test-Path $Global:ConfigurationPath)) {
-    Write-Error -Category InvalidArgument -TargetObject $Global:ConfigurationPath -Message @"
-[ERROR] Unable to find configuration file: $Global:ConfigurationPath
-
-To get help call:
-
-PS C:\>Get-Help $PSScriptRoot\Sync-Folders.ps1
-"@
-    Exit 1
-  }
-  if (-not ($validAfterAll.Contains($AfterAll))) {
-    Write-Error -Category InvalidArgument -TargetObject $AfterAll -Message @"
-[ERROR] Invalid value for AfterAll: '$AfterAll'
-
-Please choose one of $($validAfterAll -join ', ').
-
-To get help call:
-
-PS C:\>Get-Help $PSScriptRoot\Sync-Folders.ps1
-"@
-    Exit 1
-  }
-}
-
 Function Read-Configuration {
+  $Global:ConfigurationPath = [FileUtil]::ForceResolvePath($PropertiesFile)
   $Global:Configuration = Read-Json $Global:ConfigurationPath
 }
 
@@ -253,12 +265,12 @@ PS C:\>Get-Help $PSScriptRoot\Sync-Folders.ps1 -full
       "shutdown" {
         Write-Verbose "Will shutdown computer after sync is finished."
       }
-      {($_ -eq "none") -or ($_ -eq "default")} {
+      {($PSItem -eq "none") -or ($PSItem -eq "default")} {
         Write-Debug "No action activated when sync is finished."
       }
       default {
         Write-Error -Category InvalidArgument -TargetObject $Global:Configuration.afterAll @"
-[ERROR] Unsupported afterAll action: $_
+[ERROR] Unsupported afterAll action: $PSItem
 
 Supported action (case-sensitive): $($validAfterAll -join ', ')
 "@
@@ -286,8 +298,8 @@ Function Run-Single-Synchronization {
   Param(
     [PSCustomObject] $SyncConfig
   )
-  $FromFolder = Get-Folder-Object -Folder $SyncConfig.from
-  $ToFolder = Get-Folder-Object -Folder $SyncConfig.to
+  $FromFolder = [FolderObject]::getFolderObject($SyncConfig.from)
+  $ToFolder = [FolderObject]::getFolderObject($SyncConfig.to)
 
   If ($FromFolder.removable -and -not (Exists-Top-Parent -Folder $FromFolder.path)) {
     Write-Warning "Skipping removable source device as it does not exist: $($FromFolder.path)"
@@ -298,18 +310,32 @@ Function Run-Single-Synchronization {
     Return
   }
   $Options = Or-Default -Original $SyncConfig.options -Default @("/MIR", "/R:5", "/W:15", "/MT:8");
-  Write-Host "Synchronizing $($FromFolder.path) to $($ToFolder.path)."
-  RoboCopy $FromFolder.path $ToFolder.path $Options
+  Write-Verbose "Synchronizing $($FromFolder.path) to $($ToFolder.path)."
+  #RoboCopy $FromFolder.path $ToFolder.path $Options
 }
 
-Function Get-Folder-Object {
-  Param(
-    [Object] $Folder
-  )
-  If ($Folder -is [System.Management.Automation.PSCustomObject]) {
-    Return $Folder
+Class SynchronizationItem {
+  [FolderObject] $ToFolder;
+  [FolderObject] $FromFolder;
+}
+
+Class FolderObject {
+  [String] $Path;
+  [bool] $Removable;
+  FolderObject([String] $Path, [bool] $Removable) {
+    $this.Path = $Path;
+    $this.Removable = $Removable;
   }
-  Return New-Object psobject -Property @{ path=$Folder; removable=$false }
+  FolderObject([PSCustomObject] $psCustomObject) {
+    $this.Path = $psCustomObject.path;
+    $this.Removable = $psCustomObject.removable;
+  }
+  static [FolderObject] getFolderObject([Object] $Folder) {
+    If ($Folder -is [System.Management.Automation.PSCustomObject]) {
+      Return [FolderObject]::new($Folder);
+    }
+    Return [FolderObject]::new($Folder, $false);
+  }
 }
 
 Function Exists-Top-Parent {
@@ -338,17 +364,17 @@ Function Run-After-All {
       "shutdown" {
         Stop-Computer
       }
-      {($_ -eq "none") -or ($_ -eq "default")} {
+      {($PSItem -eq "none") -or ($PSItem -eq "default")} {
       }
       default {
-        Write-Error "[ERROR] Unsupported afterAll action: $_"
+        Write-Error "[ERROR] Unsupported afterAll action: $PSItem"
       }
     }
   }
 }
 
-Validate-Parameters
 Read-Configuration
 Validate-Configuration
 Run-All-Synchronizations
 Run-After-All
+
