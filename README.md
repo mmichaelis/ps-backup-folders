@@ -31,11 +31,11 @@ The default JSON file to read is `~/Backup-Folders.json` which might look like t
     },
     {
       "from": {
-        "path": "F:/rom"
+        "path": "F:/rom",
         "removable": false
       },
       "to": {
-        "path": "T:/owards"
+        "path": "T:/owards",
         "removable": true
       }
     },
