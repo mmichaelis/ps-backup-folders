@@ -5,152 +5,12 @@
 . "$PSScriptRoot/ArgumentValidators.ps1"
 . "$PSScriptRoot/ArgumentTransformers.ps1"
 
-<#
-.SYNOPSIS
-Backup one folder to another
+Import-LocalizedData -BindingVariable Messages
 
-.DESCRIPTION
-This script backups folders based on ROBOCOPY. It is configured through
-a JSON file which mght list several folders to backup.
-
-The script is especially meant to have an easy way to do backups for example
-to a NAS or an external drive.
-
-.INPUTS
-
-None.
-
-.OUTPUTS
-
-None.
-
-.NOTES
-The actual implementation of this script is very basic as it is just a
-wrapper around ROBOCOPY. So the complete behavior is based on ROBOCOPY
-despite that the default option passed to ROBOCOPY is /MIR which is two
-mirror two folders.
-
-Here are some example configuration in Backup-Folders.json. Note that
-the examples use forward slashes as path separator. This is totally
-valid in Powershell. As alternative you might use backward slashes
-but you need to escape them. So C:/From has to be written as
-C:\\From.
-
-This is the minimum configuration of a ROBOCOPY job. It will use
-ROBOCOPY with /MIR option, i. e. to mirror one folder to another.
-
-{
-  "items": [
-    {
-      "from": "C:/From",
-      "to": "C:/To",
-    }
-  ]
-}
-
-Just as the example above this will use ROBOCOPY with /MIR option.
-As this is the default, you could skip the options here.
-
-{
-  "items": [
-    {
-      "from": "C:/From",
-      "to": "C:/To",
-      "options": [
-        "/MIR"
-      ]
-    }
-  ]
-}
-
-This configuration will also mirror the given folders, but it will
-not delete files/folders with to not exist in source (which /MIR
-would do).
-
-{
-  "items": [
-    {
-      "from": "C:/From",
-      "to": "C:/To",
-      "options": [
-        "/E"
-      ]
-    }
-  ]
-}
-
-This is an example if you want to mirror to your NAS (here: FritzBOX
-with WD Elements drive attached).
-
-{
-  "items": [
-    {
-      "from": "C:/From",
-      "to": "//Fritz-nas/fritz.nas/Elements/To"
-    }
-  ]
-}
-
-If a network share or drive is not always attached you can mark the
-source or target folder as removable:
-
-{
-  "items": [
-    {
-      "from": {
-        "path": "C:/From",
-        "removable": true
-      },
-      "to": {
-        "path": "//unc-host/unc-path",
-        "removable": true
-      }
-    }
-  ]
-}
-
-.PARAMETER PropertiesFile
-The properties file (JSON) to read. Defaults to ~/Backup-Folders.json.
-
-.PARAMETER AfterAll
-Controls what happens when all folders are backed up. By default
-this is controlled by the entry in the JSON file. This parameter
-overrides any behavior specified in the JSON file. Possible values
-are: default (use JSON entry), none (no action), shutdown (shutdown
-the computer).
-
-.EXAMPLE
-Backup-Folders
-
-Backup folders with a configuration file named Backup-Folders.json in
-your home folder.
-
-.EXAMPLE
-Backup-Folders -PropertiesFile ~/Backup-Folders.json
-
-The very same as the default behavior just with the configuration file
-explicitly given.
-
-.EXAMPLE
-Backup-Folders -PropertiesFile .\Other-Backup-Folders.json
-
-Read another configuration file relative to your current working
-directory.
-
-.EXAMPLE
-Backup-Folders -AfterAll shutdown
-
-Run backup and shutdown the computer after backup
-is done.
-
-.LINK
-https://github.com/mmichaelis/ps-sync-folders
-
-.LINK
-https://technet.microsoft.com/en-us/library/cc733145(v=ws.10).aspx
-
-#>
 Function Backup-Folders {
+<#
+.EXTERNALHELP .\Backup-Folders.psm1-Help.xml
+#>
   [CmdletBinding()]
   Param(
     [Parameter(
@@ -172,6 +32,20 @@ Function Backup-Folders {
   $Configuration.items | ForEach { Backup-SingleItem $PSItem }
 }
 
+Function Test-Verbose {
+  <#
+  .SYNOPSIS
+  Tests if verbose flag is turned on
+
+  .LINK
+  http://www.mobzystems.com/blog/getting-the-verbose-switch-setting-in-powershell/
+  #>
+  [CmdletBinding()]
+  Param()
+  (Write-Verbose "TEST" -OutVariable output 4>&1) | Out-Null
+  Return (!!$output)
+}
+
 Function Backup-SingleItem {
   Param(
     [PSCustomObject] $BackupConfig
@@ -180,15 +54,21 @@ Function Backup-SingleItem {
   $ToFolder = [FolderObject]::getFolderObject($BackupConfig.to)
 
   If ($FromFolder.removable -and -not (Get-Existance-Top-Parent -Folder $FromFolder.path)) {
-    Write-Warning "Skipping removable source device as it does not exist: $($FromFolder.path)"
+    Write-Warning ($Messages.skipRemovableDevice -f $Messages.removableSourceType, $FromFolder.path)
     Return
   }
   If ($ToFolder.removable -and -not (Get-Existance-Top-Parent -Folder $ToFolder.path)) {
-    Write-Warning "Skipping removable target device as it does not exist: $($ToFolder.path)"
+    Write-Warning ($Messages.skipRemovableDevice -f $Messages.removableTargetType, $ToFolder.path)
     Return
   }
-  $Options = Get-ValueOrDefault -Object $BackupConfig -Key "options" -Default @("/MIR", "/R:5", "/W:15", "/MT:8");
-  Write-Host "Back up from $($FromFolder.path) to $($ToFolder.path)."
+  [String[]] $Options = Get-ValueOrDefault -Object $BackupConfig -Key "options" -Default @("/MIR", "/R:5", "/W:15", "/MT:32", "/XA:SH", "/XJD" );
+  Write-Verbose ($Messages.backupFromTo -f $FromFolder.path, $ToFolder.path)
+  If (Test-Verbose) {
+    $Options.Add("/V")
+  }
+  If ($WhatIfPreference) {
+    $Options.Add("/L")
+  }
   RoboCopy $FromFolder.path $ToFolder.path $Options
 }
 

@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<helpItems xmlns="http://msh" schema="maml">
+	<command:command
+      xmlns:maml="http://schemas.microsoft.com/maml/2004/10"
+      xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10"
+      xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
+		<command:details>
+			<command:name>Backup-Folders</command:name>
+			<command:verb>Backup</command:verb>
+			<command:noun>Folders</command:noun>
+			<maml:description>
+				<maml:para>Backup von Verzeichnissen basierend auf einer JSON Konfigurationsdatei</maml:para>
+			</maml:description>
+		</command:details>
+		<maml:description>
+			<maml:para><!--
+			-->Dieses Skript führt ein Backup von Verzeichnissen mittels ROBOCOPY aus. Die Konfiguration <!--
+			-->erfolgt über eine JSON Konfigurationsdatei, welche Ordner für das Backup definiert zusammen <!--
+			-->mit Optionen für den Kopiervorgang. Dies Skript ist insbesondere vorgesehen, um auf einfache <!--
+			-->Weise Backups auf ein NAS (Network Area Storage) oder ein externes Laufwerk durchführen zu können.<!--
+			-->
+			</maml:para>
+			<maml:para><!--
+			-->Man kann insbesondere Optionen für ROBOCOPY im JSON-Element 'options' innerhalb jedes Backup-Sets <!--
+			-->definieren. Falls keine Optionen angegeben sind, werden folgende Default-Werte an ROBOCOPY <!--
+			-->übergeben. Hier eine Übersicht:
+			</maml:para>
+			<maml:para>/MIR - Dateien spiegeln</maml:para>
+			<maml:para>/R:5 - Anzahl Wiederholungen bei Fehlschlag</maml:para>
+			<maml:para>/W:15 - Wartezeit in Sekunden zwischen den Versuchen</maml:para>
+			<maml:para>/MT:32 - wie viele Threads parallel laufen sollen (1 to 128)</maml:para>
+			<maml:para>/XA:SH - versteckte Systemdateien werden ausgeschlossen</maml:para>
+			<maml:para>/XJD - Junctions Points werden ausgeschlossen</maml:para>
+		</maml:description>
+		<command:syntax>
+			<command:syntaxItem>
+				<maml:name>Backup-Folders</maml:name>
+				<command:parameter required="false" variableLength="false" globbing="false" pipelineInput="false" position="0" aliases="Config, Properties">
+					<maml:name>PropertiesFile</maml:name>
+					<maml:Description>
+						<maml:para>JSON-Konfigurationsdatei, welche eingelesen werden soll.</maml:para>
+					</maml:Description>
+					<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+					<dev:type>
+						<maml:name>String</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>~/Backup-Folders.json</dev:defaultValue>
+				</command:parameter>
+				<command:parameter required="false" variableLength="false" globbing="false" pipelineInput="false" position="1" aliases="none">
+					<maml:name>AfterAll</maml:name>
+					<maml:Description>
+						<maml:para>Aktion, die nach erfolgtem Backup durchgeführt werden soll. Kommandozeilenoption überschreibt Einstellungen in der Konfigurationsdatei.</maml:para>
+					</maml:Description>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">Default</command:parameterValue>
+						<command:parameterValue required="false" variableLength="false">None</command:parameterValue>
+						<command:parameterValue required="false" variableLength="false">Shutdown</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>AfterAll</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>Default</dev:defaultValue>
+					<dev:possibleValues>
+						<dev:possibleValue>
+							<dev:value>Default</dev:value>
+							<maml:description>
+								<maml:para>Standardaktion (= None)</maml:para>
+							</maml:description>
+						</dev:possibleValue>
+						<dev:possibleValue>
+							<dev:value>None</dev:value>
+							<maml:description>
+								<maml:para>Keine Aktion, wenn das Backup beendet ist.</maml:para>
+							</maml:description>
+						</dev:possibleValue>
+						<dev:possibleValue>
+							<dev:value>Shutdown</dev:value>
+							<maml:description>
+								<maml:para>Computer wird am Ende des Backups heruntergefahren.</maml:para>
+							</maml:description>
+						</dev:possibleValue>
+					</dev:possibleValues>
+				</command:parameter>
+			</command:syntaxItem>
+		</command:syntax>
+		<command:parameters>
+			<command:parameter required="false" variableLength="false" globbing="false" pipelineInput="false" position="0" aliases="Config, Properties">
+				<maml:name>PropertiesFile</maml:name>
+				<maml:Description>
+					<maml:para>JSON-Konfigurationsdatei, welche eingelesen werden soll.</maml:para>
+				</maml:Description>
+				<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+				<dev:type>
+					<maml:name>String</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>~/Backup-Folders.json</dev:defaultValue>
+			</command:parameter>
+			<command:parameter required="false" variableLength="false" globbing="false" pipelineInput="false" position="1" aliases="none">
+				<maml:name>AfterAll</maml:name>
+				<maml:Description>
+					<maml:para>Aktion, die nach erfolgtem Backup durchgeführt werden soll. Kommandozeilenoption überschreibt Einstellungen in der Konfigurationsdatei.</maml:para>
+				</maml:Description>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">Default</command:parameterValue>
+					<command:parameterValue required="false" variableLength="false">None</command:parameterValue>
+					<command:parameterValue required="false" variableLength="false">Shutdown</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>AfterAll</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>Default</dev:defaultValue>
+				<dev:possibleValues>
+					<dev:possibleValue>
+						<dev:value>Default</dev:value>
+						<maml:description>
+							<maml:para>Standardaktion (= None)</maml:para>
+						</maml:description>
+					</dev:possibleValue>
+					<dev:possibleValue>
+						<dev:value>None</dev:value>
+						<maml:description>
+							<maml:para>Keine Aktion, wenn das Backup beendet ist.</maml:para>
+						</maml:description>
+					</dev:possibleValue>
+					<dev:possibleValue>
+						<dev:value>Shutdown</dev:value>
+						<maml:description>
+							<maml:para>Computer wird am Ende des Backups heruntergefahren.</maml:para>
+						</maml:description>
+					</dev:possibleValue>
+				</dev:possibleValues>
+			</command:parameter>
+		</command:parameters>
+		<command:inputTypes>
+			<command:inputType>
+				<dev:type>
+					<maml:name>Keine</maml:name>
+				</dev:type>
+			</command:inputType>
+		</command:inputTypes>
+		<command:returnValues>
+			<command:returnValue>
+				<dev:type>
+					<maml:name>Keine</maml:name>
+				</dev:type>
+			</command:returnValue>
+		</command:returnValues>
+		<maml:alertSet>
+			<maml:alert>
+				<maml:para/>
+			</maml:alert>
+		</maml:alertSet>
+		<command:examples>
+			<command:example>
+				<maml:title>Anwendungsbeispiel 1: Backup mit Konfiguration an Standardort</maml:title>
+				<dev:code>PS C:\&gt; Backup-Folders</dev:code>
+				<dev:remarks>
+					<maml:para>Startet das Backup mit der Konfigurationsdatei, welche sich am Standardort '~\Backup-Folders.json' befindet.</maml:para>
+					<maml:para/>
+				</dev:remarks>
+			</command:example>
+			<command:example>
+				<maml:title>Anwendungsbeispiel 2: Backup mit gegebener Konfigurationsdatei</maml:title>
+				<dev:code>PS C:\&gt; Backup-Folders -PropertiesFile C:\CFG\Other-Backup-Folders.json</dev:code>
+				<dev:remarks>
+					<maml:para>Startet das Backup mit der angegebenen Konfigurationsdatei 'C:\CFG\Other-Backup-Folders.json'</maml:para>
+					<maml:para/>
+				</dev:remarks>
+			</command:example>
+			<command:example>
+				<maml:title>Anwendungsbeispiel 3: Computer am Ende des Backups herunterfahren</maml:title>
+				<dev:code>PS C:\&gt; Backup-Folders -AfterAll shutdown</dev:code>
+				<dev:remarks>
+					<maml:para>Führt das Backup durch und fährt den Computer Runs the backup and performs a computer shutdown when done.  This overrides any behavior possibly specified in JSON config.</maml:para>
+					<maml:para/>
+				</dev:remarks>
+			</command:example>
+			<command:example>
+				<maml:title>Beispielkonfiguration 1a: Einfach - Backup eines Verzeichnisses in ein anderes</maml:title>
+				<dev:code>
+{
+  "items": [
+    {
+      "from": "C:/From",
+      "to": "C:/To",
+    }
+  ]
+}
+				</dev:code>
+				<dev:remarks>
+					<maml:para>Backup des Verzeichnisses 'C:\From' in das Verzeichnis 'C:\To'. ROBOCOPY wird mit Standardparametern gestartet. Am Ende des Backups wird keine Aktion ausgeführt.</maml:para>
+					<maml:para/>
+				</dev:remarks>
+			</command:example>
+			<command:example>
+				<maml:title>Beispielkonfiguration 1b: Escaping nötig - Backup eines Verzeichnisses in ein anderes</maml:title>
+				<dev:code>
+{
+  "items": [
+    {
+      "from": "C:\\From",
+      "to": "C:\\To",
+    }
+  ]
+}
+				</dev:code>
+				<dev:remarks>
+					<maml:para>Für die JSON-Konfiguration wird empfohlen, normale Querstriche als Verzeichnistrenner zu verwenden. <!--
+					-->Diese sind einfacher zu handhaben als Backslashes, da diese escapet werden müssen.</maml:para>
+					<maml:para/>
+				</dev:remarks>
+			</command:example>
+			<command:example>
+				<maml:title>Beispielkonfiguration 2: Backup auf NAS</maml:title>
+				<dev:code>
+{
+  "items": [
+    {
+      "from": "C:/From",
+      "to": "//Fritz-nas/fritz.nas/Elements/To",
+    }
+  ]
+}
+				</dev:code>
+				<dev:remarks>
+					<maml:para>Beispiel einer typischen Konfiguration für ein Backup auf ein NAS-Gerät (hier: FritzBox mit WD Elements).</maml:para>
+					<maml:para/>
+				</dev:remarks>
+			</command:example>
+			<command:example>
+				<maml:title>Beispielkonfiguration 3: Überschreiben der Standard-Robocopy-Optionen</maml:title>
+				<dev:code>
+{
+  "items": [
+    {
+      "from": "C:/From",
+      "to": "C:/To",,
+      "options": [
+        "/MIR", "/R:5", "/W:15", "/MT:32", "/XA:SH", "/XJD"
+      ]
+    }
+  ]
+}
+				</dev:code>
+				<dev:remarks>
+					<maml:para>Überschreibt die Standardoptionen, die an ROBOCOPY überreicht werden. Die Liste im Beispiel entspricht dabei den Standardoptionen.</maml:para>
+					<maml:para/>
+				</dev:remarks>
+			</command:example>
+			<command:example>
+				<maml:title>Beispielkonfiguration 4: Verwendung mobiler Festplatten</maml:title>
+				<dev:code>
+{
+  "items": [
+    {
+      "from": {
+        "path": "E:/From",
+        "removable": true
+      },
+      "to": {
+        "path": "//unc-host/unc-path",
+        "removable": true
+      }
+    }
+  ]
+}
+				</dev:code>
+				<dev:remarks>
+					<maml:para>Sind Festplatten, USB-Laufwerke oder NAS-Laufwerke nicht immer präsent, so <!--
+					-->kann mittels des Schalters 'removable' festgelegt werden, dies nicht als Fehler <!--
+					-->zu erkennen, sondern anstatt dessen beim nächsten Mal das Backup zu versuchen.</maml:para>
+					<maml:para/>
+				</dev:remarks>
+			</command:example>
+			<command:example>
+				<maml:title>Beispielkonfiguration 5: Herunterfahren am Ende des Backups</maml:title>
+				<dev:code>
+{
+  "items": [
+    {
+      "from": "C:/From",
+      "to": "C:/To",
+    }
+  ],
+  "afterAll": "shutdown"
+}
+				</dev:code>
+				<dev:remarks>
+					<maml:para>Löst am Ende des Backups das Herunterfahren des Rechners aus. <!--
+					-->Dies Verhalten kann stets über die entsprechende Kommandozeilenoption überschrieben werden.</maml:para>
+					<maml:para/>
+				</dev:remarks>
+			</command:example>
+		</command:examples>
+		<maml:relatedLinks>
+			<maml:navigationLink>
+				<maml:linkText>Backup-Folders auf GitHub</maml:linkText>
+				<maml:uri>https://github.com/mmichaelis/ps-sync-folders</maml:uri>
+			</maml:navigationLink>
+			<maml:navigationLink>
+				<maml:linkText>Robocopy Dokumentation</maml:linkText>
+				<maml:uri>https://technet.microsoft.com/en-us/library/cc733145(v=ws.10).aspx</maml:uri>
+			</maml:navigationLink>
+			<maml:navigationLink>
+				<maml:linkText>TechRepublic: Use Robocopy's multi-threaded feature to quickly back up your data in Windows 7</maml:linkText>
+				<maml:uri>https://www.techrepublic.com/blog/windows-and-office/use-robocopys-multi-threaded-feature-to-quickly-back-up-your-data-in-windows-7/</maml:uri>
+			</maml:navigationLink>
+		</maml:relatedLinks>
+	</command:command>
+</helpItems>
