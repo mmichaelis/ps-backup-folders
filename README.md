@@ -1,3 +1,5 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/4rfcd4bpgo92jrr1/branch/master?svg=true)](https://ci.appveyor.com/project/mmichaelis/ps-backup-folders/branch/master)
+
 # ps-backup-folders
 
 PowerShell script to backup folders, for example to perform a backup to NAS.
