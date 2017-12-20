@@ -1,4 +1,4 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/4rfcd4bpgo92jrr1/branch/master?svg=true)](https://ci.appveyor.com/project/mmichaelis/ps-backup-folders/branch/master)
+[![Apache License](https://img.shields.io/badge/License-Apache-green.svg)](https://www.apache.org/licenses/LICENSE-2.0) ![PowerShell 5](https://img.shields.io/badge/PowerShell-5-0000FF.svg) [![Build status](https://ci.appveyor.com/api/projects/status/4rfcd4bpgo92jrr1/branch/master?svg=true)](https://ci.appveyor.com/project/mmichaelis/ps-backup-folders/branch/master)
 
 # ps-backup-folders
 
