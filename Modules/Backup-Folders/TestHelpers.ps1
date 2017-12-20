@@ -1,6 +1,6 @@
 Set-StrictMode -Version Latest
 
-Function Get-ModuleInfo {
+Function Global:Get-ModuleInfo {
   <#
   .SYNOPSIS
   Gets Information of the Module Under Test
@@ -21,7 +21,7 @@ Function Get-ModuleInfo {
   }
 }
 
-Function Out-JsonFile {
+Function Global:Out-JsonFile {
   <#
   .SYNOPSIS
   Writes the Hashtable into a JSON File
@@ -42,7 +42,7 @@ Function Out-JsonFile {
   }
 }
 
-Function Create-Files {
+Function Global:Create-Files {
   [CmdletBinding()]
   Param(
     [Parameter(ValueFromPipeline)]
@@ -56,7 +56,7 @@ Function Create-Files {
   }
 }
 
-Function Create-File {
+Function Global:Create-File {
   <#
   .SYNOPSIS
   Creates a file (or directory) from given parameters
