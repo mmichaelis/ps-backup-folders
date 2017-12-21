@@ -21,6 +21,7 @@ PowerShell provides a format for documentation within scripts, so that you can g
 * [Building PowerShell Functions That Support the Pipeline -- Microsoft Certified Professional Magazine Online][MS-FUNC-PIPELINE]
 * [Write PowerShell Functions That Accept Pipelined Input – Hey, Scripting Guy! Blog][HSG-FUNC-PIPELINE]
 * [Best IDE/editor for PowerShell? - Spiceworks][POWERSHELL_IDES]
+* [Weekend Scripter: Easily Add Whatif Support to Your PowerShell Functions – Hey, Scripting Guy! Blog][PS-WHATIF]
 
 ### Pester
 
@@ -37,7 +38,8 @@ PowerShell provides a format for documentation within scripts, so that you can g
 [KM-Parameter-Validation]: <https://kevinmarquette.github.io/2017-02-20-Powershell-creating-parameter-validators-and-transforms/> "Powershell: Creating parameter validators and transforms"
 [DJ-CMDLETBINDING]: <http://www.itprotoday.com/management-mobility/what-does-powershells-cmdletbinding-do> "What does PowerShell's [CmdletBinding()] Do?"
 [BUG-ScriptsToProcess]: <https://d-fens.ch/2014/11/26/bug-powershell-scripts-in-scriptstoprocess-attribute-appear-as-loaded-modules/> "[Bug] PowerShell Scripts in ScriptsToProcess attribute appear as loaded modules – d-fens GmbH"
-[NET-EXCEPTIONS]: <https://kevinmarquette.github.io/2017-04-07-all-dotnet-exception-list/?utm_source=blog&amp;amp;utm_medium=blog&amp;amp;utm_content=crosspost> "All .Net Exceptions List"
+[NET-EXCEPTIONS]: <https://kevinmarquette.github.io/2017-04-07-all-dotnet-exception-list/?utm_source=blog&amp;amp;amp;utm_medium=blog&amp;amp;amp;utm_content=crosspost> "All .Net Exceptions List"
 [MS-FUNC-PIPELINE]: <https://mcpmag.com/articles/2015/05/20/functions-that-support-the-pipeline.aspx> "Building PowerShell Functions That Support the Pipeline -- Microsoft Certified Professional Magazine Online"
 [HSG-FUNC-PIPELINE]: <https://blogs.technet.microsoft.com/heyscriptingguy/2010/12/31/write-powershell-functions-that-accept-pipelined-input/> "Write PowerShell Functions That Accept Pipelined Input – Hey, Scripting Guy! Blog"
 [POWERSHELL_IDES]: <https://community.spiceworks.com/topic/1962830-best-ide-editor-for-powershell> "Best IDE/editor for PowerShell? - Spiceworks"
+[PS-WHATIF]: <https://blogs.technet.microsoft.com/heyscriptingguy/2012/07/08/weekend-scripter-easily-add-whatif-support-to-your-powershell-functions/> "Weekend Scripter: Easily Add Whatif Support to Your PowerShell Functions – Hey, Scripting Guy! Blog"

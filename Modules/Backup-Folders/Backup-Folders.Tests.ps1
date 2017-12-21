@@ -67,6 +67,18 @@ InModuleScope $ThisModuleName {
         Backup-Folders -PropertiesFile $SimpleItemsFile
         Join-Path -Path $toPath -ChildPath "newInFrom.txt" | Should -Exist
       }
+      It 'I can suppress execution with -WhatIf' {
+        @(
+          @{
+            "name" = "whatIf.txt";
+            "itemType" = "file";
+          }
+        ) | Create-Files -Path $fromPath
+        Backup-Folders -PropertiesFile $SimpleItemsFile -Verbose -WhatIf -OutVariable OutputArrayList *>&1 | Out-Null
+        $OutputString = $($OutputArrayList -join [Environment]::NewLine)
+        Join-Path -Path $toPath -ChildPath "whatIf.txt" | Should -Not -Exist
+        $OutputString | Should -BeLike "*whatIf.txt*"
+      }
       It 'old file in TO shall be removed on backup' {
         @(
           @{

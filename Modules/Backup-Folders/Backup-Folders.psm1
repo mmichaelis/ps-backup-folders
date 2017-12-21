@@ -11,19 +11,15 @@ Function Backup-Folders {
 <#
 .EXTERNALHELP .\Backup-Folders.psm1-Help.xml
 #>
-  [CmdletBinding()]
+  [CmdletBinding(SupportsShouldProcess=$True)]
   Param(
-    [Parameter(
-      HelpMessage="Where to read the Backup-Folders configuration file from (JSON)."
-    )]
+    [Parameter()]
     [Alias("Config","Properties")]
     [ValidateConfigurationAttribute()]
     [PathTransformAttribute()]
     [String]
     $PropertiesFile = "~/Backup-Folders.json",
-    [Parameter(
-      HelpMessage="Where to read the Backup-Folders configuration file from (JSON)."
-    )]
+    [Parameter()]
     [AfterAll]
     $AfterAll = 'Default'
   )
@@ -64,12 +60,13 @@ Function Backup-SingleItem {
   [String[]] $Options = Get-ValueOrDefault -Object $BackupConfig -Key "options" -Default @("/MIR", "/R:5", "/W:15", "/MT:32", "/XA:SH", "/XJD" );
   Write-Verbose ($Messages.backupFromTo -f $FromFolder.path, $ToFolder.path)
   If (Test-Verbose) {
-    $Options.Add("/V")
+    $Options += "/V"
   }
   If ($WhatIfPreference) {
-    $Options.Add("/L")
+    $Options += "/L"
   }
-  RoboCopy $FromFolder.path $ToFolder.path $Options
+  $Options = @($FromFolder.path, $ToFolder.path) + $Options
+  RoboCopy.exe $Options *>&1 | Write-Output
 }
 
 Function Get-ValueOrDefault {
